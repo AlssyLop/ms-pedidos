@@ -2,12 +2,15 @@ package com.plazoleta.pedidos.infrastructure.endpoint;
 
 import com.plazoleta.pedidos.application.dto.AsignarPedidoResponse;
 import com.plazoleta.pedidos.application.dto.CancelarPedidoResponse;
+import com.plazoleta.pedidos.application.dto.EntregarPedidoRequest;
+import com.plazoleta.pedidos.application.dto.EntregarPedidoResponse;
 import com.plazoleta.pedidos.application.dto.PedidoPageResponse;
 import com.plazoleta.pedidos.application.dto.PedidoRequest;
 import com.plazoleta.pedidos.application.dto.PedidoResponse;
 import com.plazoleta.pedidos.application.handle.AsignarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.CancelarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.CrearPedidoHandle;
+import com.plazoleta.pedidos.application.handle.EntregarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.ListarPedidosPorEstadoHandle;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,15 +38,18 @@ public class PedidoController {
     private final ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle;
     private final AsignarPedidoHandle asignarPedidoHandle;
     private final CancelarPedidoHandle cancelarPedidoHandle;
+    private final EntregarPedidoHandle entregarPedidoHandle;
 
     public PedidoController(CrearPedidoHandle crearPedidoHandle,
                             ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle,
                             AsignarPedidoHandle asignarPedidoHandle,
-                            CancelarPedidoHandle cancelarPedidoHandle) {
+                            CancelarPedidoHandle cancelarPedidoHandle,
+                            EntregarPedidoHandle entregarPedidoHandle) {
         this.crearPedidoHandle = crearPedidoHandle;
         this.listarPedidosPorEstadoHandle = listarPedidosPorEstadoHandle;
         this.asignarPedidoHandle = asignarPedidoHandle;
         this.cancelarPedidoHandle = cancelarPedidoHandle;
+        this.entregarPedidoHandle = entregarPedidoHandle;
     }
 
     @PostMapping
@@ -97,6 +103,22 @@ public class PedidoController {
             @PathVariable Long id,
             Authentication authentication) {
         CancelarPedidoResponse response = cancelarPedidoHandle.cancelar(id, authentication);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/entregar")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    @Operation(summary = "Entregar pedido",
+            description = "El empleado marca el pedido como entregado. Valida PIN y estado LISTO.")
+    @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente")
+    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado LISTO o PIN incorrecto")
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado")
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    public ResponseEntity<EntregarPedidoResponse> entregarPedido(
+            @PathVariable Long id,
+            @RequestBody EntregarPedidoRequest request,
+            Authentication authentication) {
+        EntregarPedidoResponse response = entregarPedidoHandle.entregar(id, request, authentication);
         return ResponseEntity.ok(response);
     }
 }
