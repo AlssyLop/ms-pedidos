@@ -1,5 +1,6 @@
 package com.plazoleta.pedidos.infrastructure.usuario;
 
+import com.plazoleta.pedidos.domain.model.value.ClienteInfo;
 import com.plazoleta.pedidos.domain.spi.ClienteValidacionPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

@@ -6,7 +6,7 @@ import com.plazoleta.pedidos.domain.model.Pedido;
 import com.plazoleta.pedidos.domain.spi.ClienteValidacionPort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
 import com.plazoleta.pedidos.domain.spi.RestauranteValidacionPort;
-import com.plazoleta.pedidos.infrastructure.usuario.ClienteInfo;
+import com.plazoleta.pedidos.domain.model.value.ClienteInfo;
 import java.util.List;
 import java.util.Optional;
 
