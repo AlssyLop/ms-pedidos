@@ -1,10 +1,12 @@
 package com.plazoleta.pedidos.infrastructure.endpoint;
 
 import com.plazoleta.pedidos.application.dto.AsignarPedidoResponse;
+import com.plazoleta.pedidos.application.dto.CancelarPedidoResponse;
 import com.plazoleta.pedidos.application.dto.PedidoPageResponse;
 import com.plazoleta.pedidos.application.dto.PedidoRequest;
 import com.plazoleta.pedidos.application.dto.PedidoResponse;
 import com.plazoleta.pedidos.application.handle.AsignarPedidoHandle;
+import com.plazoleta.pedidos.application.handle.CancelarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.CrearPedidoHandle;
 import com.plazoleta.pedidos.application.handle.ListarPedidosPorEstadoHandle;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,13 +34,16 @@ public class PedidoController {
     private final CrearPedidoHandle crearPedidoHandle;
     private final ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle;
     private final AsignarPedidoHandle asignarPedidoHandle;
+    private final CancelarPedidoHandle cancelarPedidoHandle;
 
     public PedidoController(CrearPedidoHandle crearPedidoHandle,
                             ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle,
-                            AsignarPedidoHandle asignarPedidoHandle) {
+                            AsignarPedidoHandle asignarPedidoHandle,
+                            CancelarPedidoHandle cancelarPedidoHandle) {
         this.crearPedidoHandle = crearPedidoHandle;
         this.listarPedidosPorEstadoHandle = listarPedidosPorEstadoHandle;
         this.asignarPedidoHandle = asignarPedidoHandle;
+        this.cancelarPedidoHandle = cancelarPedidoHandle;
     }
 
     @PostMapping
@@ -77,6 +82,21 @@ public class PedidoController {
             @PathVariable Long id,
             Authentication authentication) {
         AsignarPedidoResponse response = asignarPedidoHandle.asignar(id, authentication);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    @Operation(summary = "Cancelar pedido",
+            description = "El cliente cancela su pedido. Solo pedidos en estado PENDIENTE.")
+    @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente")
+    @ApiResponse(responseCode = "400", description = "El pedido ya esta en preparacion")
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente")
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    public ResponseEntity<CancelarPedidoResponse> cancelarPedido(
+            @PathVariable Long id,
+            Authentication authentication) {
+        CancelarPedidoResponse response = cancelarPedidoHandle.cancelar(id, authentication);
         return ResponseEntity.ok(response);
     }
 }
