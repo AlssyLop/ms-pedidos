@@ -4,14 +4,18 @@ import com.plazoleta.pedidos.application.dto.AsignarPedidoResponse;
 import com.plazoleta.pedidos.application.dto.CancelarPedidoResponse;
 import com.plazoleta.pedidos.application.dto.EntregarPedidoRequest;
 import com.plazoleta.pedidos.application.dto.EntregarPedidoResponse;
+import com.plazoleta.pedidos.application.dto.NotificarPedidoListoResponse;
 import com.plazoleta.pedidos.application.dto.PedidoPageResponse;
 import com.plazoleta.pedidos.application.dto.PedidoRequest;
 import com.plazoleta.pedidos.application.dto.PedidoResponse;
+import com.plazoleta.pedidos.application.dto.TrazabilidadResponse;
 import com.plazoleta.pedidos.application.handle.AsignarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.CancelarPedidoHandle;
+import com.plazoleta.pedidos.application.handle.ConsultarTrazabilidadHandle;
 import com.plazoleta.pedidos.application.handle.CrearPedidoHandle;
 import com.plazoleta.pedidos.application.handle.EntregarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.ListarPedidosPorEstadoHandle;
+import com.plazoleta.pedidos.application.handle.NotificarPedidoListoHandle;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,17 +43,23 @@ public class PedidoController {
     private final AsignarPedidoHandle asignarPedidoHandle;
     private final CancelarPedidoHandle cancelarPedidoHandle;
     private final EntregarPedidoHandle entregarPedidoHandle;
+    private final ConsultarTrazabilidadHandle consultarTrazabilidadHandle;
+    private final NotificarPedidoListoHandle notificarPedidoListoHandle;
 
     public PedidoController(CrearPedidoHandle crearPedidoHandle,
-                            ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle,
-                            AsignarPedidoHandle asignarPedidoHandle,
-                            CancelarPedidoHandle cancelarPedidoHandle,
-                            EntregarPedidoHandle entregarPedidoHandle) {
+                             ListarPedidosPorEstadoHandle listarPedidosPorEstadoHandle,
+                             AsignarPedidoHandle asignarPedidoHandle,
+                             CancelarPedidoHandle cancelarPedidoHandle,
+                             EntregarPedidoHandle entregarPedidoHandle,
+                             ConsultarTrazabilidadHandle consultarTrazabilidadHandle,
+                             NotificarPedidoListoHandle notificarPedidoListoHandle) {
         this.crearPedidoHandle = crearPedidoHandle;
         this.listarPedidosPorEstadoHandle = listarPedidosPorEstadoHandle;
         this.asignarPedidoHandle = asignarPedidoHandle;
         this.cancelarPedidoHandle = cancelarPedidoHandle;
         this.entregarPedidoHandle = entregarPedidoHandle;
+        this.consultarTrazabilidadHandle = consultarTrazabilidadHandle;
+        this.notificarPedidoListoHandle = notificarPedidoListoHandle;
     }
 
     @PostMapping
@@ -119,6 +129,35 @@ public class PedidoController {
             @RequestBody EntregarPedidoRequest request,
             Authentication authentication) {
         EntregarPedidoResponse response = entregarPedidoHandle.entregar(id, request, authentication);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/trazabilidad")
+    @PreAuthorize("hasRole('CLIENTE')")
+    @Operation(summary = "Consultar trazabilidad del pedido",
+            description = "El cliente consulta el historial de cambios de estado de su pedido desde MongoDB.")
+    @ApiResponse(responseCode = "200", description = "Trazabilidad encontrada")
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente")
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    public ResponseEntity<TrazabilidadResponse> consultarTrazabilidad(
+            @PathVariable Long id,
+            Authentication authentication) {
+        TrazabilidadResponse response = consultarTrazabilidadHandle.consultar(id, authentication);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/notificar-listo")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    @Operation(summary = "Marcar pedido como LISTO y notificar cliente",
+            description = "El empleado marca el pedido como LISTO, genera un PIN y notifica al cliente via SMS.")
+    @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO")
+    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado EN_PREPARACION")
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado")
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    public ResponseEntity<NotificarPedidoListoResponse> notificarPedidoListo(
+            @PathVariable Long id,
+            Authentication authentication) {
+        NotificarPedidoListoResponse response = notificarPedidoListoHandle.notificar(id, authentication);
         return ResponseEntity.ok(response);
     }
 }
