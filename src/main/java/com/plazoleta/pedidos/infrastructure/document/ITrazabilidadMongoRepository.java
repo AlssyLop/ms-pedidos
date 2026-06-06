@@ -6,4 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface ITrazabilidadMongoRepository extends MongoRepository<EntidadTrazabilidad, String> {
 
     List<EntidadTrazabilidad> findByIdPedidoOrderByFechaCambioAsc(Long idPedido);
+
+    List<EntidadTrazabilidad> findByIdPedidoInOrderByFechaCambioAsc(List<Long> idPedidos);
 }

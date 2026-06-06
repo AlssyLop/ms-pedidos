@@ -18,4 +18,6 @@ public interface PedidoRepositoryPort {
     Page<Pedido> findByIdRestaurante(Long idRestaurante, Pageable pageable);
 
     Page<Pedido> findByIdRestauranteAndEstado(Long idRestaurante, EstadoPedido estado, Pageable pageable);
+
+    List<Pedido> findAllByIdRestauranteAndEstado(Long idRestaurante, EstadoPedido estado);
 }

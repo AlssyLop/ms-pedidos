@@ -14,4 +14,6 @@ public interface IPedidoJpaRepository extends JpaRepository<EntidadPedido, Long>
     Page<EntidadPedido> findByIdRestauranteOrderByFechaCreacionDesc(Long idRestaurante, Pageable pageable);
 
     Page<EntidadPedido> findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(Long idRestaurante, EstadoPedidoEntity estado, Pageable pageable);
+
+    List<EntidadPedido> findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(Long idRestaurante, EstadoPedidoEntity estado);
 }

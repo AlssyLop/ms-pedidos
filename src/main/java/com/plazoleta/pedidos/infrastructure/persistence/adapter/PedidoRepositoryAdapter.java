@@ -77,4 +77,13 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
                 .findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(idRestaurante, EstadoPedidoEntity.valueOf(estado.name()), pageable)
                 .map(mapper::toDomain);
     }
+
+    @Override
+    public List<Pedido> findAllByIdRestauranteAndEstado(Long idRestaurante, EstadoPedido estado) {
+        return pedidoJpaRepository
+                .findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(idRestaurante, EstadoPedidoEntity.valueOf(estado.name()))
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
 }
