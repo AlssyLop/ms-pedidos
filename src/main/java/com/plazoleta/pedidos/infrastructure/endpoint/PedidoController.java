@@ -9,6 +9,7 @@ import com.plazoleta.pedidos.application.dto.PedidoPageResponse;
 import com.plazoleta.pedidos.application.dto.PedidoRequest;
 import com.plazoleta.pedidos.application.dto.PedidoResponse;
 import com.plazoleta.pedidos.application.dto.TrazabilidadResponse;
+import com.plazoleta.pedidos.application.exception.ErrorResponse;
 import com.plazoleta.pedidos.application.handle.AsignarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.CancelarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.ConsultarTrazabilidadHandle;
@@ -17,6 +18,8 @@ import com.plazoleta.pedidos.application.handle.EntregarPedidoHandle;
 import com.plazoleta.pedidos.application.handle.ListarPedidosPorEstadoHandle;
 import com.plazoleta.pedidos.application.handle.NotificarPedidoListoHandle;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -65,7 +68,10 @@ public class PedidoController {
     @PostMapping
     @PreAuthorize("hasRole('CLIENTE')")
     @Operation(summary = "Realizar pedido", description = "Crea un nuevo pedido para el cliente autenticado.")
-    @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente")
+    @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente",
+            content = @Content(schema = @Schema(implementation = PedidoResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Error de validacion",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<PedidoResponse> crearPedido(@Valid @RequestBody PedidoRequest request,
                                                       Authentication authentication) {
         PedidoResponse response = crearPedidoHandle.crearPedido(request, authentication);
@@ -76,7 +82,8 @@ public class PedidoController {
     @PreAuthorize("hasRole('EMPLEADO')")
     @Operation(summary = "Listar pedidos por estado",
             description = "Lista los pedidos del restaurante del empleado autenticado, opcionalmente filtrados por estado.")
-    @ApiResponse(responseCode = "200", description = "Listado exitoso")
+    @ApiResponse(responseCode = "200", description = "Listado exitoso",
+            content = @Content(schema = @Schema(implementation = PedidoPageResponse.class)))
     public ResponseEntity<PedidoPageResponse> listarPedidos(
             @RequestParam(required = false) String estado,
             @RequestParam(defaultValue = "0") int page,
@@ -90,10 +97,14 @@ public class PedidoController {
     @PreAuthorize("hasRole('EMPLEADO')")
     @Operation(summary = "Asignarse a un pedido",
             description = "El empleado se asigna a un pedido. Cambia el estado de PENDIENTE a EN_PREPARACION.")
-    @ApiResponse(responseCode = "200", description = "Pedido asignado exitosamente")
-    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado PENDIENTE o ya tiene empleado")
-    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado")
-    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    @ApiResponse(responseCode = "200", description = "Pedido asignado exitosamente",
+            content = @Content(schema = @Schema(implementation = AsignarPedidoResponse.class)))
+    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado PENDIENTE o ya tiene empleado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<AsignarPedidoResponse> asignarPedido(
             @PathVariable Long id,
             Authentication authentication) {
@@ -105,10 +116,14 @@ public class PedidoController {
     @PreAuthorize("hasRole('CLIENTE')")
     @Operation(summary = "Cancelar pedido",
             description = "El cliente cancela su pedido. Solo pedidos en estado PENDIENTE.")
-    @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente")
-    @ApiResponse(responseCode = "400", description = "El pedido ya esta en preparacion")
-    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente")
-    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente",
+            content = @Content(schema = @Schema(implementation = CancelarPedidoResponse.class)))
+    @ApiResponse(responseCode = "400", description = "El pedido ya esta en preparacion",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<CancelarPedidoResponse> cancelarPedido(
             @PathVariable Long id,
             Authentication authentication) {
@@ -120,10 +135,14 @@ public class PedidoController {
     @PreAuthorize("hasRole('EMPLEADO')")
     @Operation(summary = "Entregar pedido",
             description = "El empleado marca el pedido como entregado. Valida PIN y estado LISTO.")
-    @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente")
-    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado LISTO o PIN incorrecto")
-    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado")
-    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente",
+            content = @Content(schema = @Schema(implementation = EntregarPedidoResponse.class)))
+    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado LISTO o PIN incorrecto",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<EntregarPedidoResponse> entregarPedido(
             @PathVariable Long id,
             @RequestBody EntregarPedidoRequest request,
@@ -136,9 +155,12 @@ public class PedidoController {
     @PreAuthorize("hasRole('CLIENTE')")
     @Operation(summary = "Consultar trazabilidad del pedido",
             description = "El cliente consulta el historial de cambios de estado de su pedido desde MongoDB.")
-    @ApiResponse(responseCode = "200", description = "Trazabilidad encontrada")
-    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente")
-    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    @ApiResponse(responseCode = "200", description = "Trazabilidad encontrada",
+            content = @Content(schema = @Schema(implementation = TrazabilidadResponse.class)))
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al cliente",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<TrazabilidadResponse> consultarTrazabilidad(
             @PathVariable Long id,
             Authentication authentication) {
@@ -150,10 +172,14 @@ public class PedidoController {
     @PreAuthorize("hasRole('EMPLEADO')")
     @Operation(summary = "Marcar pedido como LISTO y notificar cliente",
             description = "El empleado marca el pedido como LISTO, genera un PIN y notifica al cliente via SMS.")
-    @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO")
-    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado EN_PREPARACION")
-    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado")
-    @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
+    @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO",
+            content = @Content(schema = @Schema(implementation = NotificarPedidoListoResponse.class)))
+    @ApiResponse(responseCode = "400", description = "El pedido no esta en estado EN_PREPARACION",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "El pedido no pertenece al restaurante del empleado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<NotificarPedidoListoResponse> notificarPedidoListo(
             @PathVariable Long id,
             Authentication authentication) {

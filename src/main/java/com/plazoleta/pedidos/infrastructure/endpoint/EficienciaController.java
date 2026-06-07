@@ -1,8 +1,11 @@
 package com.plazoleta.pedidos.infrastructure.endpoint;
 
 import com.plazoleta.pedidos.application.dto.EficienciaResponse;
+import com.plazoleta.pedidos.application.exception.ErrorResponse;
 import com.plazoleta.pedidos.application.handle.ConsultarEficienciaHandle;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +30,10 @@ public class EficienciaController {
     @PreAuthorize("hasRole('PROPIETARIO')")
     @Operation(summary = "Consultar eficiencia de pedidos",
             description = "El propietario consulta los tiempos de entrega de los pedidos de su restaurante y el ranking de empleados.")
-    @ApiResponse(responseCode = "200", description = "Eficiencia calculada exitosamente")
-    @ApiResponse(responseCode = "404", description = "No se encontro restaurante o no hay pedidos entregados")
+    @ApiResponse(responseCode = "200", description = "Eficiencia calculada exitosamente",
+            content = @Content(schema = @Schema(implementation = EficienciaResponse.class)))
+    @ApiResponse(responseCode = "404", description = "No se encontro restaurante o no hay pedidos entregados",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<EficienciaResponse> consultarEficiencia(Authentication authentication) {
         EficienciaResponse response = consultarEficienciaHandle.consultar(authentication);
         return ResponseEntity.ok(response);
