@@ -43,10 +43,10 @@ class ConsultarTrazabilidadTest {
                 LocalDateTime.now(), LocalDateTime.now());
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
 
-        Trazabilidad t1 = new Trazabilidad("id1", 1L, "PENDIENTE", "EN_PREPARACION",
-                LocalDateTime.now().minusHours(2), 30L);
-        Trazabilidad t2 = new Trazabilidad("id2", 1L, "EN_PREPARACION", "LISTO",
-                LocalDateTime.now().minusHours(1), 45L);
+        Trazabilidad t1 = new Trazabilidad("id1", 1L, 10L, 5L, "PENDIENTE", "EN_PREPARACION",
+                LocalDateTime.now().minusHours(2), null, 30L);
+        Trazabilidad t2 = new Trazabilidad("id2", 1L, 10L, 5L, "EN_PREPARACION", "LISTO",
+                LocalDateTime.now().minusHours(1), null, 45L);
         when(trazabilidadRepository.findByIdPedidoOrderByFechaCambioAsc(1L))
                 .thenReturn(List.of(t1, t2));
 

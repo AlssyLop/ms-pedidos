@@ -30,8 +30,9 @@ public class BeanConfiguration {
     @Bean
     public CrearPedidoPort crearPedidoPort(PedidoRepositoryPort pedidoRepository,
                                            RestauranteValidacionPort restauranteValidacion,
-                                           ClienteValidacionPort clienteValidacion) {
-        return new CrearPedido(pedidoRepository, restauranteValidacion, clienteValidacion);
+                                           ClienteValidacionPort clienteValidacion,
+                                           TrazabilidadRepositoryPort trazabilidadRepository) {
+        return new CrearPedido(pedidoRepository, restauranteValidacion, clienteValidacion, trazabilidadRepository);
     }
 
     @Bean
@@ -41,19 +42,22 @@ public class BeanConfiguration {
 
     @Bean
     public AsignarPedidoPort asignarPedidoPort(PedidoRepositoryPort pedidoRepository,
-                                                EmpleadoRestaurantePedidosPort empleadoRestaurantePort) {
-        return new AsignarPedido(pedidoRepository, empleadoRestaurantePort);
+                                                 EmpleadoRestaurantePedidosPort empleadoRestaurantePort,
+                                                 TrazabilidadRepositoryPort trazabilidadRepository) {
+        return new AsignarPedido(pedidoRepository, empleadoRestaurantePort, trazabilidadRepository);
     }
 
     @Bean
-    public CancelarPedidoPort cancelarPedidoPort(PedidoRepositoryPort pedidoRepository) {
-        return new CancelarPedido(pedidoRepository);
+    public CancelarPedidoPort cancelarPedidoPort(PedidoRepositoryPort pedidoRepository,
+                                                  TrazabilidadRepositoryPort trazabilidadRepository) {
+        return new CancelarPedido(pedidoRepository, trazabilidadRepository);
     }
 
     @Bean
     public EntregarPedidoPort entregarPedidoPort(PedidoRepositoryPort pedidoRepository,
-                                                  EmpleadoRestaurantePedidosPort empleadoRestaurantePort) {
-        return new EntregarPedido(pedidoRepository, empleadoRestaurantePort);
+                                                  EmpleadoRestaurantePedidosPort empleadoRestaurantePort,
+                                                  TrazabilidadRepositoryPort trazabilidadRepository) {
+        return new EntregarPedido(pedidoRepository, empleadoRestaurantePort, trazabilidadRepository);
     }
 
     @Bean
@@ -74,7 +78,8 @@ public class BeanConfiguration {
     public com.plazoleta.pedidos.domain.api.NotificarPedidoListoPort notificarPedidoListoPort(
             PedidoRepositoryPort pedidoRepository,
             EmpleadoRestaurantePedidosPort empleadoRestaurantePort,
-            NotificacionClientePort notificacionClientePort) {
-        return new NotificarPedidoListo(pedidoRepository, empleadoRestaurantePort, notificacionClientePort);
+            NotificacionClientePort notificacionClientePort,
+            TrazabilidadRepositoryPort trazabilidadRepository) {
+        return new NotificarPedidoListo(pedidoRepository, empleadoRestaurantePort, notificacionClientePort, trazabilidadRepository);
     }
 }

@@ -7,4 +7,6 @@ public interface TrazabilidadRepositoryPort {
     List<Trazabilidad> findByIdPedidoOrderByFechaCambioAsc(Long idPedido);
 
     List<Trazabilidad> findByIdPedidoInOrderByFechaCambioAsc(List<Long> idPedidos);
+
+    Trazabilidad save(Trazabilidad trazabilidad);
 }

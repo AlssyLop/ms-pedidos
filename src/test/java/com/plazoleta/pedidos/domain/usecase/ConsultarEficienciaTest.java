@@ -55,14 +55,14 @@ class ConsultarEficienciaTest {
         when(pedidoRepository.findAllByIdRestauranteAndEstado(5L, EstadoPedido.ENTREGADO))
                 .thenReturn(List.of(p1, p2));
 
-        Trazabilidad t1 = new Trazabilidad("id1", 10L, "PENDIENTE", "EN_PREPARACION",
-                inicio.plusMinutes(20), 20L);
-        Trazabilidad t2 = new Trazabilidad("id2", 10L, "EN_PREPARACION", "LISTO",
-                fin.minusMinutes(10), 30L);
-        Trazabilidad t3 = new Trazabilidad("id3", 10L, "LISTO", "ENTREGADO",
-                fin, 10L);
-        Trazabilidad t4 = new Trazabilidad("id4", 11L, "PENDIENTE", "ENTREGADO",
-                fin.plusMinutes(10), 50L);
+        Trazabilidad t1 = new Trazabilidad("id1", 10L, 100L, 5L, "PENDIENTE", "EN_PREPARACION",
+                inicio.plusMinutes(20), 77L, 20L);
+        Trazabilidad t2 = new Trazabilidad("id2", 10L, 100L, 5L, "EN_PREPARACION", "LISTO",
+                fin.minusMinutes(10), 77L, 30L);
+        Trazabilidad t3 = new Trazabilidad("id3", 10L, 100L, 5L, "LISTO", "ENTREGADO",
+                fin, 77L, 10L);
+        Trazabilidad t4 = new Trazabilidad("id4", 11L, 101L, 5L, "PENDIENTE", "ENTREGADO",
+                fin.plusMinutes(10), 77L, 50L);
         when(trazabilidadRepository.findByIdPedidoInOrderByFechaCambioAsc(List.of(10L, 11L)))
                 .thenReturn(List.of(t1, t2, t3, t4));
 
@@ -115,8 +115,8 @@ class ConsultarEficienciaTest {
         when(pedidoRepository.findAllByIdRestauranteAndEstado(5L, EstadoPedido.ENTREGADO))
                 .thenReturn(List.of(p1));
 
-        Trazabilidad t1 = new Trazabilidad("id1", 10L, "PENDIENTE", "ENTREGADO",
-                inicio.plusMinutes(30), null);
+        Trazabilidad t1 = new Trazabilidad("id1", 10L, 100L, 5L, "PENDIENTE", "ENTREGADO",
+                inicio.plusMinutes(30), 77L, null);
         when(trazabilidadRepository.findByIdPedidoInOrderByFechaCambioAsc(List.of(10L)))
                 .thenReturn(List.of(t1));
 

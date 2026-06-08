@@ -10,9 +10,12 @@ public class EntidadTrazabilidad {
     @Id
     private String id;
     private Long idPedido;
+    private Long idCliente;
+    private Long idRestaurante;
     private String estadoAnterior;
     private String estadoNuevo;
     private LocalDateTime fechaCambio;
+    private Long idEmpleado;
     private Long duracionEtapaMinutos;
 
     public EntidadTrazabilidad() {}
@@ -23,6 +26,12 @@ public class EntidadTrazabilidad {
     public Long getIdPedido() { return idPedido; }
     public void setIdPedido(Long idPedido) { this.idPedido = idPedido; }
 
+    public Long getIdCliente() { return idCliente; }
+    public void setIdCliente(Long idCliente) { this.idCliente = idCliente; }
+
+    public Long getIdRestaurante() { return idRestaurante; }
+    public void setIdRestaurante(Long idRestaurante) { this.idRestaurante = idRestaurante; }
+
     public String getEstadoAnterior() { return estadoAnterior; }
     public void setEstadoAnterior(String estadoAnterior) { this.estadoAnterior = estadoAnterior; }
 
@@ -31,6 +40,9 @@ public class EntidadTrazabilidad {
 
     public LocalDateTime getFechaCambio() { return fechaCambio; }
     public void setFechaCambio(LocalDateTime fechaCambio) { this.fechaCambio = fechaCambio; }
+
+    public Long getIdEmpleado() { return idEmpleado; }
+    public void setIdEmpleado(Long idEmpleado) { this.idEmpleado = idEmpleado; }
 
     public Long getDuracionEtapaMinutos() { return duracionEtapaMinutos; }
     public void setDuracionEtapaMinutos(Long duracionEtapaMinutos) { this.duracionEtapaMinutos = duracionEtapaMinutos; }
