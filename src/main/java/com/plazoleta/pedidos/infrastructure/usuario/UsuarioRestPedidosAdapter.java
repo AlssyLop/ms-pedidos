@@ -28,7 +28,7 @@ public class UsuarioRestPedidosAdapter implements ClienteValidacionPort {
                     msUsuariosUrl + "/usuarios/" + idCliente,
                     ClienteInfoResponse.class
             );
-            return Optional.of(new ClienteInfo(idCliente, response.getNombre(), "+0000000000"));
+            return Optional.of(new ClienteInfo(idCliente, response.getNombre(), response.getCelular()));
         } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();
         }

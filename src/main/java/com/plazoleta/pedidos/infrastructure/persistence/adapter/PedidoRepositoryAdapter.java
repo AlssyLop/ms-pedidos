@@ -12,6 +12,7 @@ import com.plazoleta.pedidos.infrastructure.persistence.repository.IPedidoJpaRep
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +38,7 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
         EntidadPedido entity = mapper.toEntity(pedido);
         entity = pedidoJpaRepository.save(entity);
 
-        if (pedido.getDetalles() != null) {
+        if (pedido.getId() == null && pedido.getDetalles() != null) {
             for (var detalle : pedido.getDetalles()) {
                 EntidadDetallePedido detEntity = mapper.detalleToEntity(detalle, entity);
                 detallePedidoJpaRepository.save(detEntity);
@@ -67,15 +68,21 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
 
     @Override
     public Page<Pedido> findByIdRestaurante(Long idRestaurante, Pageable pageable) {
-        return pedidoJpaRepository.findByIdRestauranteOrderByFechaCreacionDesc(idRestaurante, pageable)
-                .map(mapper::toDomain);
+        Page<EntidadPedido> entityPage = pedidoJpaRepository.findByIdRestauranteOrderByFechaCreacionDesc(idRestaurante, pageable);
+        List<Pedido> content = entityPage.getContent().stream()
+                .map(this::toDomainWithDetalles)
+                .toList();
+        return new PageImpl<>(content, pageable, entityPage.getTotalElements());
     }
 
     @Override
     public Page<Pedido> findByIdRestauranteAndEstado(Long idRestaurante, EstadoPedido estado, Pageable pageable) {
-        return pedidoJpaRepository
-                .findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(idRestaurante, EstadoPedidoEntity.valueOf(estado.name()), pageable)
-                .map(mapper::toDomain);
+        Page<EntidadPedido> entityPage = pedidoJpaRepository
+                .findByIdRestauranteAndEstadoOrderByFechaCreacionDesc(idRestaurante, EstadoPedidoEntity.valueOf(estado.name()), pageable);
+        List<Pedido> content = entityPage.getContent().stream()
+                .map(this::toDomainWithDetalles)
+                .toList();
+        return new PageImpl<>(content, pageable, entityPage.getTotalElements());
     }
 
     @Override
@@ -85,5 +92,12 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    private Pedido toDomainWithDetalles(EntidadPedido entity) {
+        Pedido domain = mapper.toDomain(entity);
+        List<EntidadDetallePedido> detEntities = detallePedidoJpaRepository.findByPedidoId(entity.getId());
+        domain.setDetalles(mapper.detallesToDomain(detEntities));
+        return domain;
     }
 }
