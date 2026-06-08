@@ -246,3 +246,70 @@ El propietario consulta el tiempo promedio de sus pedidos ENTREGADOS y un rankin
 ```
 
 - **404**: propietario no tiene restaurante registrado
+
+---
+
+## Relacion con otros microservicios
+
+```
++------------------+     RSA-4096 RS256 (verificacion)     +------------------+
+|   ms-pedidos     |  <-------------------------------------- |   ms-usuarios    |
+|   Puerto 8083    |                                         |  (emisor JWT)  |
++------------------+                                         +------------------+
+         |
+         | RestTemplate (consulta cliente)
+         v
++------------------+      RestTemplate (valida restaurante / platos info)
+|  ms-restaurantes |  <----------------------------------------
+|   Puerto 8082    |
++------------------+
+         |
+         | RestTemplate (envia notificacion SMS)
+         v
++------------------+
+| ms-notificaciones|
+|   Puerto 8084    |
++------------------+
+```
+
+| Microservicio | Relacion | Como interactua |
+|---------------|----------|-----------------|
+| **ms-usuarios** | **Valida JWT + consulta cliente** | `ms-pedidos` valida el JWT localmente con llave publica RSA. Consulta `GET /usuarios/{id}` para obtener nombre y celular del cliente al crear un pedido. |
+| **ms-restaurantes** | **Valida negocio** | `ms-pedidos` consulta `GET /restaurantes/{id}` para validar existencia del restaurante, y `POST /restaurantes/{id}/platos/info` para validar pertenencia/activos de platos y obtener sus nombres. |
+| **ms-notificaciones** | **Notifica cliente** | `ms-pedidos` llama a `POST /notificaciones/enviar` para enviar SMS con el PIN de entrega al cliente, forwardeando el JWT del empleado. |
+
+### Flujo de creacion de pedido (H11)
+
+1. CLIENTE autenticado -> `POST /pedidos` en **ms-pedidos**
+2. `ms-pedidos` -> `GET /usuarios/{idCliente}` en **ms-usuarios** (obtiene nombre y celular)
+3. `ms-pedidos` -> `GET /restaurantes/{id}` en **ms-restaurantes** (valida existencia del restaurante)
+4. `ms-pedidos` -> `POST /restaurantes/{id}/platos/info` en **ms-restaurantes** (valida que platos pertenezcan al restaurante, esten activos, y obtiene nombres)
+5. Si todas las validaciones OK, persiste el pedido en MySQL y guarda trazabilidad `null -> PENDIENTE` en MongoDB
+
+### Flujo de notificacion (H14)
+
+1. EMPLEADO autenticado -> `PATCH /pedidos/{id}/notificar-listo` en **ms-pedidos**
+2. `ms-pedidos` cambia estado a LISTO, genera PIN de 6 digitos
+3. `ms-pedidos` -> `POST /notificaciones/enviar` en **ms-notificaciones** (forwardeando JWT)
+4. `ms-notificaciones` envia SMS via Twilio y guarda log en MongoDB
+5. Si SMS falla, el pedido igual queda LISTO pero se informa del error
+
+### Flujo de entrega (H15)
+
+1. EMPLEADO autenticado -> `PATCH /pedidos/{id}/entregar` con PIN en **ms-pedidos**
+2. `ms-pedidos` valida que el PIN coincida con el generado en H14
+3. Si OK, cambia estado a ENTREGADO y guarda trazabilidad `LISTO -> ENTREGADO` en MongoDB
+
+### Flujo de cancelacion (H16)
+
+1. CLIENTE autenticado -> `PATCH /pedidos/{id}/cancelar` en **ms-pedidos**
+2. `ms-pedidos` valida que el pedido pertenezca al cliente y este en PENDIENTE
+3. Si OK, cambia estado a CANCELADO y guarda trazabilidad `PENDIENTE -> CANCELADO` en MongoDB
+
+### Estados del pedido
+
+```
+PENDIENTE --(H13: asignar)--> EN_PREPARACION --(H14: notificar)--> LISTO --(H15: entregar)--> ENTREGADO
+     |
+     |--(H16: cancelar)--> CANCELADO
+```
