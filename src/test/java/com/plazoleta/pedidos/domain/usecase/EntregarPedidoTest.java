@@ -3,8 +3,10 @@ package com.plazoleta.pedidos.domain.usecase;
 import com.plazoleta.pedidos.domain.api.EntregarPedidoPort;
 import com.plazoleta.pedidos.domain.model.EstadoPedido;
 import com.plazoleta.pedidos.domain.model.Pedido;
+import com.plazoleta.pedidos.domain.model.Trazabilidad;
 import com.plazoleta.pedidos.domain.spi.EmpleadoRestaurantePedidosPort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
+import com.plazoleta.pedidos.domain.spi.TrazabilidadRepositoryPort;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,9 @@ class EntregarPedidoTest {
     @Mock
     private EmpleadoRestaurantePedidosPort empleadoRestaurantePort;
 
+    @Mock
+    private TrazabilidadRepositoryPort trazabilidadRepository;
+
     @InjectMocks
     private EntregarPedido entregarPedido;
 
@@ -41,6 +46,7 @@ class EntregarPedidoTest {
                 .thenReturn(Optional.of(5L));
         when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(trazabilidadRepository.save(any(Trazabilidad.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Pedido resultado = entregarPedido.entregarPedido(1L, 99L, "123456");
 
@@ -97,6 +103,34 @@ class EntregarPedidoTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> entregarPedido.entregarPedido(1L, 99L, "123456"));
         assertEquals("El pedido no se encuentra en estado LISTO", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Lanzar excepcion cuando el pedido ya fue entregado")
+    void pedidoYaEntregado() {
+        Pedido pedido = new Pedido(1L, 10L, "Cliente", "+57300", 5L,
+                EstadoPedido.ENTREGADO, 77L, null, null, null);
+        when(empleadoRestaurantePort.obtenerIdRestauranteDelEmpleado(99L))
+                .thenReturn(Optional.of(5L));
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> entregarPedido.entregarPedido(1L, 99L, "123456"));
+        assertEquals("El pedido ya fue entregado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Lanzar excepcion cuando el pedido fue cancelado")
+    void pedidoCancelado() {
+        Pedido pedido = new Pedido(1L, 10L, "Cliente", "+57300", 5L,
+                EstadoPedido.CANCELADO, 77L, null, null, null);
+        when(empleadoRestaurantePort.obtenerIdRestauranteDelEmpleado(99L))
+                .thenReturn(Optional.of(5L));
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> entregarPedido.entregarPedido(1L, 99L, "123456"));
+        assertEquals("El pedido fue cancelado", ex.getMessage());
     }
 
     @Test

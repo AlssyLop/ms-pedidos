@@ -3,19 +3,25 @@ package com.plazoleta.pedidos.domain.usecase;
 import com.plazoleta.pedidos.domain.api.EntregarPedidoPort;
 import com.plazoleta.pedidos.domain.model.EstadoPedido;
 import com.plazoleta.pedidos.domain.model.Pedido;
+import com.plazoleta.pedidos.domain.model.Trazabilidad;
 import com.plazoleta.pedidos.domain.spi.EmpleadoRestaurantePedidosPort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
+import com.plazoleta.pedidos.domain.spi.TrazabilidadRepositoryPort;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class EntregarPedido implements EntregarPedidoPort {
 
     private final PedidoRepositoryPort pedidoRepository;
     private final EmpleadoRestaurantePedidosPort empleadoRestaurantePort;
+    private final TrazabilidadRepositoryPort trazabilidadRepository;
 
     public EntregarPedido(PedidoRepositoryPort pedidoRepository,
-                          EmpleadoRestaurantePedidosPort empleadoRestaurantePort) {
+                          EmpleadoRestaurantePedidosPort empleadoRestaurantePort,
+                          TrazabilidadRepositoryPort trazabilidadRepository) {
         this.pedidoRepository = pedidoRepository;
         this.empleadoRestaurantePort = empleadoRestaurantePort;
+        this.trazabilidadRepository = trazabilidadRepository;
     }
 
     @Override
@@ -33,6 +39,12 @@ public class EntregarPedido implements EntregarPedidoPort {
             throw new IllegalArgumentException("No tienes permiso para entregar este pedido");
         }
 
+        if (pedido.getEstado() == EstadoPedido.ENTREGADO) {
+            throw new IllegalArgumentException("El pedido ya fue entregado");
+        }
+        if (pedido.getEstado() == EstadoPedido.CANCELADO) {
+            throw new IllegalArgumentException("El pedido fue cancelado");
+        }
         if (pedido.getEstado() != EstadoPedido.LISTO) {
             throw new IllegalArgumentException("El pedido no se encuentra en estado LISTO");
         }
@@ -42,6 +54,20 @@ public class EntregarPedido implements EntregarPedidoPort {
         }
 
         pedido.setEstado(EstadoPedido.ENTREGADO);
-        return pedidoRepository.save(pedido);
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        trazabilidadRepository.save(new Trazabilidad(
+                null,
+                guardado.getId(),
+                guardado.getIdCliente(),
+                guardado.getIdRestaurante(),
+                EstadoPedido.LISTO.name(),
+                EstadoPedido.ENTREGADO.name(),
+                LocalDateTime.now(),
+                idEmpleado,
+                null
+        ));
+
+        return guardado;
     }
 }

@@ -3,19 +3,25 @@ package com.plazoleta.pedidos.domain.usecase;
 import com.plazoleta.pedidos.domain.api.AsignarPedidoPort;
 import com.plazoleta.pedidos.domain.model.EstadoPedido;
 import com.plazoleta.pedidos.domain.model.Pedido;
+import com.plazoleta.pedidos.domain.model.Trazabilidad;
 import com.plazoleta.pedidos.domain.spi.EmpleadoRestaurantePedidosPort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
+import com.plazoleta.pedidos.domain.spi.TrazabilidadRepositoryPort;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class AsignarPedido implements AsignarPedidoPort {
 
     private final PedidoRepositoryPort pedidoRepository;
     private final EmpleadoRestaurantePedidosPort empleadoRestaurantePort;
+    private final TrazabilidadRepositoryPort trazabilidadRepository;
 
     public AsignarPedido(PedidoRepositoryPort pedidoRepository,
-                         EmpleadoRestaurantePedidosPort empleadoRestaurantePort) {
+                         EmpleadoRestaurantePedidosPort empleadoRestaurantePort,
+                         TrazabilidadRepositoryPort trazabilidadRepository) {
         this.pedidoRepository = pedidoRepository;
         this.empleadoRestaurantePort = empleadoRestaurantePort;
+        this.trazabilidadRepository = trazabilidadRepository;
     }
 
     @Override
@@ -33,8 +39,20 @@ public class AsignarPedido implements AsignarPedidoPort {
             throw new IllegalArgumentException("No tienes permiso para asignarte a este pedido");
         }
 
+        if (pedido.getEstado() == EstadoPedido.CANCELADO) {
+            throw new IllegalArgumentException("El pedido fue cancelado");
+        }
+        if (pedido.getEstado() == EstadoPedido.ENTREGADO) {
+            throw new IllegalArgumentException("El pedido ya fue entregado");
+        }
+        if (pedido.getEstado() == EstadoPedido.LISTO) {
+            throw new IllegalArgumentException("El pedido ya esta listo");
+        }
+        if (pedido.getEstado() == EstadoPedido.EN_PREPARACION) {
+            throw new IllegalArgumentException("El pedido ya esta en preparacion");
+        }
         if (pedido.getEstado() != EstadoPedido.PENDIENTE) {
-            throw new IllegalArgumentException("Pedido asignado, se encuentra en estado PREPARACION");
+            throw new IllegalArgumentException("El pedido no esta disponible para asignar");
         }
 
         if (pedido.getIdEmpleado() != null) {
@@ -43,6 +61,20 @@ public class AsignarPedido implements AsignarPedidoPort {
 
         pedido.setIdEmpleado(idEmpleado);
         pedido.setEstado(EstadoPedido.EN_PREPARACION);
-        return pedidoRepository.save(pedido);
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        trazabilidadRepository.save(new Trazabilidad(
+                null,
+                guardado.getId(),
+                guardado.getIdCliente(),
+                guardado.getIdRestaurante(),
+                EstadoPedido.PENDIENTE.name(),
+                EstadoPedido.EN_PREPARACION.name(),
+                LocalDateTime.now(),
+                idEmpleado,
+                null
+        ));
+
+        return guardado;
     }
 }

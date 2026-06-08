@@ -3,9 +3,11 @@ package com.plazoleta.pedidos.domain.usecase;
 import com.plazoleta.pedidos.domain.api.NotificarPedidoListoPort;
 import com.plazoleta.pedidos.domain.model.EstadoPedido;
 import com.plazoleta.pedidos.domain.model.Pedido;
+import com.plazoleta.pedidos.domain.model.Trazabilidad;
 import com.plazoleta.pedidos.domain.spi.EmpleadoRestaurantePedidosPort;
 import com.plazoleta.pedidos.domain.spi.NotificacionClientePort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
+import com.plazoleta.pedidos.domain.spi.TrazabilidadRepositoryPort;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +39,9 @@ class NotificarPedidoListoTest {
     @Mock
     private NotificacionClientePort notificacionClientePort;
 
+    @Mock
+    private TrazabilidadRepositoryPort trazabilidadRepository;
+
     @InjectMocks
     private NotificarPedidoListo notificarPedidoListo;
 
@@ -51,6 +56,7 @@ class NotificarPedidoListoTest {
         when(notificacionClientePort.enviarNotificacion(eq(1L), eq("+573001234567"), any()))
                 .thenReturn(true);
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(trazabilidadRepository.save(any(Trazabilidad.class))).thenAnswer(inv -> inv.getArgument(0));
 
         String resultado = notificarPedidoListo.notificar(1L, 77L);
 
@@ -72,6 +78,7 @@ class NotificarPedidoListoTest {
         when(notificacionClientePort.enviarNotificacion(eq(1L), eq("+573001234567"), any()))
                 .thenReturn(false);
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(trazabilidadRepository.save(any(Trazabilidad.class))).thenAnswer(inv -> inv.getArgument(0));
 
         String resultado = notificarPedidoListo.notificar(1L, 77L);
 
@@ -100,6 +107,45 @@ class NotificarPedidoListoTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> notificarPedidoListo.notificar(1L, 77L));
         assertEquals("El pedido no se encuentra en estado EN_PREPARACION", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Lanzar excepcion cuando el pedido ya esta listo")
+    void pedidoYaListo() {
+        Pedido pedido = new Pedido(1L, 10L, "Cliente", "+57300", 5L,
+                EstadoPedido.LISTO, null, null,
+                LocalDateTime.now(), LocalDateTime.now());
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> notificarPedidoListo.notificar(1L, 77L));
+        assertEquals("El pedido ya esta listo", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Lanzar excepcion cuando el pedido ya fue entregado")
+    void pedidoYaEntregado() {
+        Pedido pedido = new Pedido(1L, 10L, "Cliente", "+57300", 5L,
+                EstadoPedido.ENTREGADO, null, null,
+                LocalDateTime.now(), LocalDateTime.now());
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> notificarPedidoListo.notificar(1L, 77L));
+        assertEquals("El pedido ya fue entregado", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Lanzar excepcion cuando el pedido fue cancelado")
+    void pedidoCancelado() {
+        Pedido pedido = new Pedido(1L, 10L, "Cliente", "+57300", 5L,
+                EstadoPedido.CANCELADO, null, null,
+                LocalDateTime.now(), LocalDateTime.now());
+        when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> notificarPedidoListo.notificar(1L, 77L));
+        assertEquals("El pedido fue cancelado", ex.getMessage());
     }
 
     @Test
