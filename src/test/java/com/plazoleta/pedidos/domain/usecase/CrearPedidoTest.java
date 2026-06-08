@@ -3,9 +3,12 @@ package com.plazoleta.pedidos.domain.usecase;
 import com.plazoleta.pedidos.domain.model.DetallePedido;
 import com.plazoleta.pedidos.domain.model.EstadoPedido;
 import com.plazoleta.pedidos.domain.model.Pedido;
+import com.plazoleta.pedidos.domain.model.PlatoInfo;
+import com.plazoleta.pedidos.domain.model.Trazabilidad;
 import com.plazoleta.pedidos.domain.spi.ClienteValidacionPort;
 import com.plazoleta.pedidos.domain.spi.PedidoRepositoryPort;
 import com.plazoleta.pedidos.domain.spi.RestauranteValidacionPort;
+import com.plazoleta.pedidos.domain.spi.TrazabilidadRepositoryPort;
 import com.plazoleta.pedidos.domain.model.value.ClienteInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +40,9 @@ class CrearPedidoTest {
     @Mock
     private ClienteValidacionPort clienteValidacion;
 
+    @Mock
+    private TrazabilidadRepositoryPort trazabilidadRepository;
+
     @InjectMocks
     private CrearPedido crearPedido;
 
@@ -55,11 +61,10 @@ class CrearPedidoTest {
 
         when(clienteValidacion.obtenerCliente(1L)).thenReturn(Optional.of(cliente));
         when(restauranteValidacion.existsById(10L)).thenReturn(true);
-        when(restauranteValidacion.validarPlatosPertenecenARestaurante(10L, List.of(100L)))
-                .thenReturn(List.of(100L));
-        when(restauranteValidacion.validarPlatosActivos(List.of(100L)))
-                .thenReturn(List.of(100L));
+        when(restauranteValidacion.obtenerInfoPlatos(10L, List.of(100L)))
+                .thenReturn(List.of(new PlatoInfo(100L, "Plato Test", true)));
         when(pedidoRepository.existsByIdClienteAndEstadoIn(anyLong(), anyList())).thenReturn(false);
+        when(trazabilidadRepository.save(any(Trazabilidad.class))).thenAnswer(inv -> inv.getArgument(0));
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> {
             Pedido p = inv.getArgument(0);
             p.setId(1L);
@@ -106,12 +111,12 @@ class CrearPedidoTest {
 
         when(clienteValidacion.obtenerCliente(1L)).thenReturn(Optional.of(cliente));
         when(restauranteValidacion.existsById(10L)).thenReturn(true);
-        when(restauranteValidacion.validarPlatosPertenecenARestaurante(10L, List.of(100L)))
+        when(restauranteValidacion.obtenerInfoPlatos(10L, List.of(100L)))
                 .thenReturn(List.of());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> crearPedido.crearPedido(pedido));
-        assertEquals("El plato no pertenece al restaurante", ex.getMessage());
+        assertEquals("El plato 100 no pertenece al restaurante", ex.getMessage());
     }
 
     @Test
@@ -122,10 +127,8 @@ class CrearPedidoTest {
 
         when(clienteValidacion.obtenerCliente(1L)).thenReturn(Optional.of(cliente));
         when(restauranteValidacion.existsById(10L)).thenReturn(true);
-        when(restauranteValidacion.validarPlatosPertenecenARestaurante(10L, List.of(100L)))
-                .thenReturn(List.of(100L));
-        when(restauranteValidacion.validarPlatosActivos(List.of(100L)))
-                .thenReturn(List.of(100L));
+        when(restauranteValidacion.obtenerInfoPlatos(10L, List.of(100L)))
+                .thenReturn(List.of(new PlatoInfo(100L, "Plato Test", true)));
         when(pedidoRepository.existsByIdClienteAndEstadoIn(1L,
                 List.of(EstadoPedido.PENDIENTE, EstadoPedido.EN_PREPARACION, EstadoPedido.LISTO)))
                 .thenReturn(true);
@@ -143,13 +146,11 @@ class CrearPedidoTest {
 
         when(clienteValidacion.obtenerCliente(1L)).thenReturn(Optional.of(cliente));
         when(restauranteValidacion.existsById(10L)).thenReturn(true);
-        when(restauranteValidacion.validarPlatosPertenecenARestaurante(10L, List.of(100L)))
-                .thenReturn(List.of(100L));
-        when(restauranteValidacion.validarPlatosActivos(List.of(100L)))
-                .thenReturn(List.of());
+        when(restauranteValidacion.obtenerInfoPlatos(10L, List.of(100L)))
+                .thenReturn(List.of(new PlatoInfo(100L, "Plato Test", false)));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> crearPedido.crearPedido(pedido));
-        assertEquals("El plato no se encuentra disponible", ex.getMessage());
+        assertEquals("El plato 100 no se encuentra disponible", ex.getMessage());
     }
 }

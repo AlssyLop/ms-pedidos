@@ -1,7 +1,9 @@
 package com.plazoleta.pedidos.infrastructure.restaurante;
 
+import com.plazoleta.pedidos.domain.model.PlatoInfo;
 import com.plazoleta.pedidos.domain.spi.PropietarioRestaurantePort;
 import com.plazoleta.pedidos.domain.spi.RestauranteValidacionPort;
+import com.plazoleta.pedidos.infrastructure.restaurante.dto.PlatoInfoResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -39,28 +41,16 @@ public class RestauranteRestPedidosAdapter implements RestauranteValidacionPort,
     }
 
     @Override
-    public List<Long> validarPlatosPertenecenARestaurante(Long idRestaurante, List<Long> idsPlatos) {
+    public List<PlatoInfo> obtenerInfoPlatos(Long idRestaurante, List<Long> idsPlatos) {
         try {
             HttpHeaders headers = new HttpHeaders();
             HttpEntity<List<Long>> request = new HttpEntity<>(idsPlatos, headers);
-            ResponseEntity<Long[]> response = restTemplate.exchange(
-                    msRestaurantesUrl + "/restaurantes/" + idRestaurante + "/platos/validar-pertenencia",
-                    HttpMethod.POST, request, Long[].class);
-            return Arrays.asList(response.getBody());
-        } catch (HttpClientErrorException e) {
-            return List.of();
-        }
-    }
-
-    @Override
-    public List<Long> validarPlatosActivos(List<Long> idsPlatos) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            HttpEntity<List<Long>> request = new HttpEntity<>(idsPlatos, headers);
-            ResponseEntity<Long[]> response = restTemplate.exchange(
-                    msRestaurantesUrl + "/platos/validar-activos",
-                    HttpMethod.POST, request, Long[].class);
-            return Arrays.asList(response.getBody());
+            ResponseEntity<PlatoInfoResponse[]> response = restTemplate.exchange(
+                    msRestaurantesUrl + "/restaurantes/" + idRestaurante + "/platos/info",
+                    HttpMethod.POST, request, PlatoInfoResponse[].class);
+            return Arrays.stream(response.getBody())
+                    .map(r -> new PlatoInfo(r.getIdPlato(), r.getNombrePlato(), r.isActivo()))
+                    .toList();
         } catch (HttpClientErrorException e) {
             return List.of();
         }
