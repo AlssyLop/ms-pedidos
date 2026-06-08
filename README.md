@@ -61,6 +61,10 @@ Colección `trazabilidad` — un documento por transición de estado, con `durac
 
 Documentación OpenAPI disponible en `/swagger-ui.html` y `/v3/api-docs`.
 
+## Notas técnicas
+
+- `EntidadPedido` usa `@PrePersist` para asignar `fechaCreacion` y `fechaModificacion` automáticamente al insertar, y `@PreUpdate` para actualizar `fechaModificacion` en cada cambio. Esto evita `DataIntegrityViolationException` por columnas `NOT NULL` sin valor.
+
 ## Seguridad JWT
 
 Todos los endpoints requieren un token JWT válido emitido por `ms-usuarios`. El token se envía vía header:

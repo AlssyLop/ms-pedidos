@@ -78,3 +78,6 @@
 3. `feat(H11)`: endpoint POST /pedidos, use case, DTOs, factory, handle
 4. `test(H11)`: 6 escenarios unitarios
 5. `docs`: README.md inicial ms-pedidos
+
+## Fixes posteriores
+- `EntidadPedido`: agregados `@PrePersist` y `@PreUpdate` para asignar `fechaCreacion` y `fechaModificacion` automáticamente. Esto evita `DataIntegrityViolationException` al insertar pedidos ya que el mapper ignora ambos campos y las columnas son `NOT NULL`.
